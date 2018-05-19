@@ -7,8 +7,8 @@ NSArray<UIImage *> *images =@[image1, image2, image3];<br>
 ATLoopView *imageLoopView = [[ATLoopView alloc] init];<br>
 [imageLoopView registerClassForContentView:[UIImageView class]];<br>
 imageLoopView.numberOfPages = ^NSInteger{<br>
->return images.count;<br>
-<};<br>
+return images.count;<br>
+};<br>
 imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){<br>
 contentView.contentMode = UIViewContentModeScaleAspectFill;<br>
 contentView.image = images[idx];<br>
