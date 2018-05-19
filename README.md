@@ -8,7 +8,7 @@ ATLoopView *imageLoopView = [[ATLoopView alloc] init];<br>
 [imageLoopView registerClassForContentView:[UIImageView class]];<br>
 imageLoopView.numberOfPages = ^NSInteger{<br>
 >return images.count;<br>
-};<br>
+<};<br>
 imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){<br>
 contentView.contentMode = UIViewContentModeScaleAspectFill;<br>
 contentView.image = images[idx];<br>
