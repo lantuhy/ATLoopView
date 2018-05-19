@@ -14,7 +14,7 @@ contentView.contentMode = UIViewContentModeScaleAspectFill;<br>
 contentView.image = images[idx];<br>
 };<br>
 
- ![image](https://github.com/lantuhy/ATLoopView/raw/master/screenshots/vim-screenshot.jpg)
+ ![image](https://github.com/lantuhy/ATLoopView/raw/master/screenshots/Screenshot.gif)
 
 
 
