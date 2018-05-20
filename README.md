@@ -3,6 +3,7 @@
 ## (图片、文字、自定义视图)循环滚动
 
 ### 示例代码
+```Objective-C
 NSArray<UIImage *> *images =@[image1, image2, image3];<br>
 ATLoopView *imageLoopView = [[ATLoopView alloc] init];<br>
 [imageLoopView registerClassForContentView:[UIImageView class]];<br>
