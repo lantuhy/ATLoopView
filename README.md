@@ -4,13 +4,13 @@
 
 ### 示例代码
 ```Objective-C
-NSArray<UIImage *> *images =@[image1, image2, image3];
+NSArray<UIImage *> *images = @[image1, image2, image3];
 ATLoopView *imageLoopView = [[ATLoopView alloc] init];
 [imageLoopView registerClassForContentView:[UIImageView class]];
 imageLoopView.numberOfPages = ^NSInteger{
       return images.count;
 };
-imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){<br>
+imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){
       contentView.contentMode = UIViewContentModeScaleAspectFill;<br>
       contentView.image = images[idx];
 };
