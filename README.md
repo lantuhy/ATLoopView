@@ -14,7 +14,7 @@ imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView
       contentView.image = images[idx];<br>
 };<br>
 
- ![](https://github.com/lantuhy/ATLoopView/blob/master/Screenshots/Screenshot.gif)
+ ![](https://raw.githubusercontent.com/shaojiankui/JKScrollFocus/master/demo.gif)
 
 
 
