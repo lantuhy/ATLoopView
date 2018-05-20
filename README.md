@@ -4,16 +4,17 @@
 
 ### 示例代码
 ```Objective-C
-NSArray<UIImage *> *images =@[image1, image2, image3];<br>
-ATLoopView *imageLoopView = [[ATLoopView alloc] init];<br>
-[imageLoopView registerClassForContentView:[UIImageView class]];<br>
-imageLoopView.numberOfPages = ^NSInteger{<br>
-      return images.count;<br>
-};<br>
+NSArray<UIImage *> *images =@[image1, image2, image3];
+ATLoopView *imageLoopView = [[ATLoopView alloc] init];
+[imageLoopView registerClassForContentView:[UIImageView class]];
+imageLoopView.numberOfPages = ^NSInteger{
+      return images.count;
+};
 imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){<br>
       contentView.contentMode = UIViewContentModeScaleAspectFill;<br>
-      contentView.image = images[idx];<br>
-};<br>
+      contentView.image = images[idx];
+};
+```
 
  ![](https://raw.githubusercontent.com/lantuhy/ATLoopView/screenshots/screenshot.gif)
 
