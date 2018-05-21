@@ -16,7 +16,7 @@ imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView
 };
 ```
 
- <img src="https://github.com/lantuhy/ATLoopView/blob/master/Screenshot/Screenshot.gif" width="375" height="667" />
+ <img src="https://github.com/lantuhy/ATLoopView/blob/master/Screenshot/demo.gif" width="320" height="568" />
 
 
 
