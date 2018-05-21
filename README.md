@@ -2,11 +2,6 @@
 
 ## (图片、文字、自定义视图)循环滚动
 
-## 示例代码
-#  ATLoopView
-
-## (图片、文字、自定义视图)循环滚动
-
 ### 示例代码
 ```Objective-C
 _imageLoopView = [[ATLoopView alloc] init];
