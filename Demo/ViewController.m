@@ -5,13 +5,12 @@
 
 #import "ATLoopView.h"
 #import "ViewController.h"
-#import "ATScreenshots.h"
 
 @interface ViewController () < ATLoopViewDelegate >
 
 @property (nonatomic, readonly) ATLoopView *imageLoopView;
-@property (nonatomic, readonly) ATLoopView *textLoopView;
-@property (nonatomic, readonly) ATLoopView *loopView3;
+@property (nonatomic, readonly) ATLoopView *newsLoopView;
+@property (nonatomic, readonly) ATLoopView *movieLoopView;
 
 @end
 
@@ -44,20 +43,11 @@
            @{@"image" : [UIImage imageNamed:@"image2"], @"title" : @"桃花庵下桃花仙"},
            @{@"image" : [UIImage imageNamed:@"image3"], @"title" : @"桃花仙人种桃树"},];
     [self.view addSubview:self.imageLoopView];
-    [self.view addSubview:self.textLoopView];
+    [self.view addSubview:self.newsLoopView];
     [self.view addSubview:self.loopView3];
     [_imageLoopView enableAutoScroll:YES];
-    [_textLoopView enableAutoScroll:YES];
-    [_loopView3 enableAutoScroll:YES];
-    
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.9 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-        ATScreenshots *sh = [ATScreenshots new];
-        sh.duration = 3.2;
-        sh.view = self.view;
-        sh.compressGIF = YES;
-        [sh start];
-    });
+    [_newsLoopView enableAutoScroll:YES];
+    [_movieLoopView enableAutoScroll:YES];
 }
 
 @synthesize imageLoopView = _imageLoopView;
@@ -77,20 +67,20 @@
     return _imageLoopView;
 }
 
-@synthesize textLoopView = _textLoopView;
-- (ATLoopView *)textLoopView
+@synthesize newsLoopView = _newsLoopView;
+- (ATLoopView *)newsLoopView
 {
-    if(_textLoopView == nil)
+    if(_newsLoopView == nil)
     {
-        _textLoopView = [[ATLoopView alloc] init];
-        _textLoopView.backgroundColor = [UIColor colorWithRed:0.97 green:0.99 blue:1.0 alpha:1.0];
-        _textLoopView.scrollDirection = ATLoopViewScrollDirectionVertical;
-        _textLoopView.pageIndicatorHidden = YES;
-        _textLoopView.autoScrollAnimationDuration = 1.0;
-        _textLoopView.autoScrollTimeInterval = 6.0;
+        _newsLoopView = [[ATLoopView alloc] init];
+        _newsLoopView.backgroundColor = [UIColor colorWithRed:0.97 green:0.99 blue:1.0 alpha:1.0];
+        _newsLoopView.scrollDirection = ATLoopViewScrollDirectionVertical;
+        _newsLoopView.pageIndicatorHidden = YES;
+        _newsLoopView.autoScrollAnimationDuration = 1.0;
+        _newsLoopView.autoScrollTimeInterval = 6.0;
         
         ATLoopViewBlocksDelegate *delegate = [ATLoopViewBlocksDelegate new];
-        [_textLoopView setBlocksDelegate:delegate];
+        [_newsLoopView setBlocksDelegate:delegate];
         NSArray<NSDictionary<NSString *, NSString *> *> *array =
         @[@{@"group" : @"热门", @"title" : @"酒醒只在花前坐，酒醉还来花下眠"},
           @{@"group" : @"推荐", @"title" : @"半醒半醉日复日，花落花开年复年"},
@@ -110,22 +100,22 @@
             fprintf(stderr, "点击类第%ld条新闻\r\n", (long)(idx + 1) );
         };
     }
-    return _textLoopView;
+    return _newsLoopView;
 }
 
-@synthesize loopView3 = _loopView3;
+@synthesize movieLoopView = _movieLoopView;
 - (ATLoopView *)loopView3
 {
-    if(_loopView3 == nil)
+    if(_movieLoopView == nil)
     {
-        _loopView3 = [[ATLoopView alloc] init];
-        _loopView3.currentPageIndicatorColor = [UIColor colorWithRed:0 green:0.75 blue:1.0 alpha:0.9];
-        _loopView3.autoScrollTimingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
-        _loopView3.autoScrollAnimationDuration = 1.0;
-        _loopView3.autoScrollTimeInterval = 7.0;
-        _loopView3.delegate = self;
+        _movieLoopView = [[ATLoopView alloc] init];
+        _movieLoopView.currentPageIndicatorColor = [UIColor colorWithRed:0 green:0.75 blue:1.0 alpha:0.9];
+        _movieLoopView.autoScrollTimingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+        _movieLoopView.autoScrollAnimationDuration = 1.0;
+        _movieLoopView.autoScrollTimeInterval = 7.0;
+        _movieLoopView.delegate = self;
     }
-    return _loopView3;
+    return _movieLoopView;
 }
 
 - (void)viewDidLayoutSubviews
@@ -136,8 +126,8 @@
     CGRect imageLoopViewFrame = CGRectMake(0, 0, bounds.size.width, bounds.size.width * 0.5);
     _imageLoopView.frame = imageLoopViewFrame;
     CGRect textLoopViewFrame = CGRectMake(8, CGRectGetMaxY(imageLoopViewFrame) + 8, bounds.size.width - 16 , 56);
-    _textLoopView.frame = textLoopViewFrame;
-    _loopView3.frame = CGRectMake(0, CGRectGetMaxY(textLoopViewFrame) + 8, bounds.size.width, bounds.size.width * 0.5);
+    _newsLoopView.frame = textLoopViewFrame;
+    _movieLoopView.frame = CGRectMake(0, CGRectGetMaxY(textLoopViewFrame) + 8, bounds.size.width, bounds.size.width * 0.5);
 }
 
 #pragma mark - ATLoopViewDelegate

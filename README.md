@@ -21,7 +21,6 @@ ATLoopViewImageDelegate *delegate =
 ### 演示
 <img src="https://github.com/lantuhy/ATLoopView/blob/master/Screenshot/demo.gif" width="320" height="568" />
 
- ![image](https://github.com/lantuhy/ATLoopView/raw/master/screenshots/vim-screenshot.jpg)
 
 
 
