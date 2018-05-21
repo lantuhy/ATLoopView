@@ -44,7 +44,7 @@
            @{@"image" : [UIImage imageNamed:@"image3"], @"title" : @"桃花仙人种桃树"},];
     [self.view addSubview:self.imageLoopView];
     [self.view addSubview:self.newsLoopView];
-    [self.view addSubview:self.loopView3];
+    [self.view addSubview:self.movieLoopView];
     [_imageLoopView enableAutoScroll:YES];
     [_newsLoopView enableAutoScroll:YES];
     [_movieLoopView enableAutoScroll:YES];
@@ -104,7 +104,7 @@
 }
 
 @synthesize movieLoopView = _movieLoopView;
-- (ATLoopView *)loopView3
+- (ATLoopView *)movieLoopView
 {
     if(_movieLoopView == nil)
     {
@@ -125,9 +125,9 @@
     CGRect bounds = self.view.bounds;
     CGRect imageLoopViewFrame = CGRectMake(0, 0, bounds.size.width, bounds.size.width * 0.5);
     _imageLoopView.frame = imageLoopViewFrame;
-    CGRect textLoopViewFrame = CGRectMake(8, CGRectGetMaxY(imageLoopViewFrame) + 8, bounds.size.width - 16 , 56);
-    _newsLoopView.frame = textLoopViewFrame;
-    _movieLoopView.frame = CGRectMake(0, CGRectGetMaxY(textLoopViewFrame) + 8, bounds.size.width, bounds.size.width * 0.5);
+    CGRect nwesLoopViewFrame = CGRectMake(8, CGRectGetMaxY(imageLoopViewFrame) + 8, bounds.size.width - 16 , 56);
+    _newsLoopView.frame = nwesLoopViewFrame;
+    _movieLoopView.frame = CGRectMake(0, CGRectGetMaxY(nwesLoopViewFrame) + 8, bounds.size.width, bounds.size.width * 0.5);
 }
 
 #pragma mark - ATLoopViewDelegate

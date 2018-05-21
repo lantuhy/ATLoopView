@@ -64,7 +64,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
         bool didSelectPage : 1;
         bool didScrollToPage : 1;
     }_delegateResponds;
-    id<ATLoopViewDelegate> _blocksDelegate;
+    ATLoopViewBlocksDelegate *_blocksDelegate;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
