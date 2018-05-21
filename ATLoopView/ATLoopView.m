@@ -19,6 +19,7 @@ static void AnimationPacingBuilderRelease(AnimationPacingBuilder *apb);
 
 @protocol _ATLoopScrollViewDelegate < UIScrollViewDelegate >
 
+- (__kindof UIView *)contentViewForScrollView:(_ATLoopScrollView *)scorllView;
 - (void)scrollView:(_ATLoopScrollView *)scrollView shouldUpdateContentViewAtIndex:(NSInteger)index;
 - (void)scrollView:(_ATLoopScrollView *)scrollView contentOffsetChangedWithNewValue:(CGPoint)contentOffsetNew oldValue:(CGPoint)contentOffsetOld;
 
@@ -30,19 +31,7 @@ static void AnimationPacingBuilderRelease(AnimationPacingBuilder *apb);
 @property (nonatomic) ATLoopViewScrollDirection scrollDirection;
 @property (nonatomic) NSArray<UIView *> *contentViews;
 
-- (void)registerClassForContentView:(Class)cls;
-- (void)registerNibForContentView:(UINib *)nib;
 - (void)updateContentViews;
-
-@end
-
-
-@interface _ATLoopScrollViewBlocksDelegate : NSObject< ATLoopViewDelegate >
-
-@property (nonatomic, strong, nullable) NSInteger ( ^ numberOfPages)(void);
-@property (nonatomic, strong, nullable) void ( ^ shouldUpdateContentViewForPageAtIndex)(__kindof UIView *contentView, NSInteger idx);
-@property (nonatomic, strong, nullable) void ( ^ didScrollToPageAtIndex)(NSInteger idx);
-@property (nonatomic, strong, nullable) void ( ^ didSelectPageAtIndex)(NSInteger idx);
 
 @end
 
@@ -75,8 +64,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
         bool didSelectPage : 1;
         bool didScrollToPage : 1;
     }_delegateResponds;
-    
-    _ATLoopScrollViewBlocksDelegate* _blocksDelegate;
+    id<ATLoopViewDelegate> _blocksDelegate;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -90,12 +78,10 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
         [self addSubview:_scrollView];
         
         _pageControl = [[ATPageControl alloc] init];
-        _pageControl.currentPageIndicatorColor = [UIColor lightGrayColor];
-        _pageControl.pageIndicatorColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.30];
         [self addSubview:_pageControl];
         
         _autoScrollTimeInterval = 5.0;
-        _autoScrollAnimationDuration = 1.0;
+        _autoScrollAnimationDuration = 0.25;
     }
     return self;
 }
@@ -114,13 +100,12 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
         _delegateResponds.didSelectPage = [_delegate respondsToSelector:@selector(loopView:didSelectPageAtIndex:)];
         _delegateResponds.didScrollToPage = [_delegate respondsToSelector:@selector(loopView:didScrollToPageAtIndex:)];
     }
-    if(![_delegate isKindOfClass:[_ATLoopScrollViewBlocksDelegate class]])
-        _blocksDelegate = nil;
 }
 
-- (id<ATLoopViewDelegate>)delegate
+- (void)setBlocksDelegate:(ATLoopViewBlocksDelegate *)delegate
 {
-    return _delegate == _blocksDelegate ? nil : _delegate;
+    _blocksDelegate = delegate;
+    self.delegate = delegate;
 }
 
 @dynamic scrollDirection;
@@ -155,48 +140,14 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 @dynamic pageIndicatorColor;
 @dynamic currentPageIndicatorColor;
 
-@dynamic numberOfPages;
-@dynamic shouldUpdateContentViewForPageAtIndex;
-@dynamic didSelectPageAtIndex;
-@dynamic didScrollToPageAtIndex;
 - (id)forwardingTargetForSelector:(SEL)aSelector
 {
-    if(aSelector == @selector(setNumberOfPages:) ||
-       aSelector == @selector(setShouldUpdateContentViewForPageAtIndex :) ||
-       aSelector == @selector(setDidScrollToPageAtIndex:) ||
-       aSelector == @selector(setDidSelectPageAtIndex:) ||
-       aSelector == @selector(numberOfPages) ||
-       aSelector == @selector(shouldUpdateContentViewForPageAtIndex) ||
-       aSelector == @selector(didScrollToPageAtIndex) ||
-       aSelector == @selector(didSelectPageAtIndex))
-    {
-        if(_blocksDelegate == nil)
-        {
-            _blocksDelegate = [_ATLoopScrollViewBlocksDelegate new];
-            self.delegate = _blocksDelegate;
-        }
-        return _blocksDelegate;
-    }
-    
     if(aSelector == @selector(setPageIndicatorColor:) ||
        aSelector == @selector(setCurrentPageIndicatorColor:) ||
        aSelector == @selector(pageIndicatorColor) ||
        aSelector == @selector(currentPageIndicatorColor))
         return _pageControl;
     return [super forwardingTargetForSelector:aSelector];
-}
-
-//
-
-- (void)registerClassForContentView:(Class)cls
-{
-    if([cls isSubclassOfClass:[UIView class]])
-        [_scrollView registerClassForContentView:cls];
-}
-
-- (void)registerNibForContentView:(UINib *)nib
-{
-    [_scrollView registerNibForContentView:nib];
 }
 
 - (void)enableAutoScroll:(BOOL)enable
@@ -324,6 +275,11 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     [_autoScrollTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:_autoScrollTimeInterval]];
 }
 
+- (__kindof UIView *)contentViewForScrollView:(_ATLoopScrollView *)scorllView
+{
+    return [_delegate contentViewForLoopView:self];
+}
+
 - (void)scrollView:(_ATLoopScrollView *)scrollView shouldUpdateContentViewAtIndex:(NSInteger)index
 {
     NSInteger numberOfPages = _pageControl.numberOfPages;
@@ -387,10 +343,12 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 @end
 
+static const NSInteger kNumberOfContentViews = 3;
+
 @implementation _ATLoopScrollView
 {
     NSMutableArray<UIView *> *_contentViews;
-    BOOL _contentViewsNeedsUpdate[3];
+    BOOL _contentViewsNeedsUpdate[kNumberOfContentViews];
     BOOL _layoutingContentViews;
 }
 
@@ -406,36 +364,6 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 @dynamic delegate;
 
-- (void)registerClassForContentView:(Class)cls
-{
-    _contentViews = [[NSMutableArray alloc] initWithCapacity:3];
-    for(NSInteger i = 0; i < 3; ++i)
-    {
-        UIView *contentView = [[cls alloc] init];
-        [self addSubview:contentView];
-        _contentViews[i] = contentView;
-        _contentViewsNeedsUpdate[i] = YES;
-    }
-    [self layoutContentViews];
-}
-
-- (void)registerNibForContentView:(UINib *)nib
-{
-    _contentViews = [[NSMutableArray alloc] initWithCapacity:3];
-    for(NSInteger i = 0; i < 3; ++i)
-    {
-        NSArray<UIView *> *array = [nib instantiateWithOwner:nil options:nil];
-        UIView *contentView = array.firstObject;
-        if([contentView isKindOfClass:[UIView class]])
-        {
-            [self addSubview:contentView];
-            _contentViews[i] = contentView;
-            _contentViewsNeedsUpdate[i] = YES;
-        }
-    }
-    [self layoutContentViews];
-}
-
 - (void)setFrame:(CGRect)frame
 {
     CGRect previousFrame = self.frame;
@@ -443,8 +371,8 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     if(!CGSizeEqualToSize(previousFrame.size, frame.size))
     {
         self.contentSize = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
-        CGSizeMake(frame.size.width * 3, frame.size.height) :
-        CGSizeMake(frame.size.width, frame.size.height * 3);
+        CGSizeMake(frame.size.width * kNumberOfContentViews, frame.size.height) :
+        CGSizeMake(frame.size.width, frame.size.height * kNumberOfContentViews);
         [self layoutContentViews];
     }
 }
@@ -455,6 +383,17 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     CGRect bounds = self.bounds;
     if(DirectionWidth(bounds.size, _scrollDirection) > 0)
     {
+        if(_contentViews == nil)
+        {
+            _contentViews = [[NSMutableArray alloc] initWithCapacity:kNumberOfContentViews];
+            for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
+            {
+                UIView *contentView = [self.delegate contentViewForScrollView:self];
+                [self addSubview:contentView];
+                _contentViews[i] = contentView;
+            }
+        }
+        
         NSInteger i = 0;
         for(UIView *contentView in _contentViews)
         {
@@ -472,7 +411,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 - (void)updateContentViews
 {
-    for(NSInteger i = 0; i < 3; ++i)
+    for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
         _contentViewsNeedsUpdate[i] = YES;
     if(DirectionOffset(self.contentOffset, _scrollDirection) == DirectionWidth(self.bounds.size, _scrollDirection))
         [self updateContentViewsIfNeeded];
@@ -480,7 +419,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 - (void)updateContentViewsIfNeeded
 {
-    for(NSInteger i = 0; i < 3; ++i)
+    for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
     {
         if(_contentViewsNeedsUpdate[i])
         {
@@ -533,11 +472,17 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 @end
 
-@implementation _ATLoopScrollViewBlocksDelegate
+
+@implementation ATLoopViewBlocksDelegate
 
 - (NSInteger)numberOfPagesInLoopView:(ATLoopView *)loopView
 {
     return  _numberOfPages();
+}
+
+- (__kindof UIView *)contentViewForLoopView:(ATLoopView *)loopView
+{
+    return _contentViewForLoopView();
 }
 
 - (void)loopView:(ATLoopView *)loopView shouldUpdateContentView:(nonnull __kindof UIView *)contentView forPageAtIndex:(NSInteger)index
@@ -553,8 +498,39 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 - (void)loopView:(ATLoopView *)loopView didSelectPageAtIndex:(NSInteger)index
 {
-    if(_didScrollToPageAtIndex)
+    if(_didSelectPageAtIndex)
         _didSelectPageAtIndex(index);
+}
+
+@end
+
+@implementation ATLoopViewImageDelegate
+
+- (instancetype)initWithImages:(NSArray<UIImage *> *)images contentMode:(UIViewContentMode)contentMode
+{
+    if(self = [super init])
+    {
+        _images = [images copy];
+        _contentMode = contentMode;
+    }
+    return self;
+}
+
+- (NSInteger)numberOfPagesInLoopView:(ATLoopView *)loopView
+{
+    return _images.count;
+}
+
+- (__kindof UIView *)contentViewForLoopView:(ATLoopView *)loopView
+{
+    UIImageView *imageView = [[UIImageView alloc] init];
+    imageView.contentMode = _contentMode;
+    return imageView;
+}
+
+- (void)loopView:(ATLoopView *)loopView shouldUpdateContentView:(UIImageView *)contentView forPageAtIndex:(NSInteger)index
+{
+    contentView.image = _images[index];
 }
 
 @end

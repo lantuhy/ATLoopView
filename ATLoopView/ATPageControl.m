@@ -26,6 +26,8 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
     if(self = [super initWithFrame:frame])
     {
         _dotLayers = [[NSMutableArray alloc] initWithCapacity:8];
+        _currentPageIndicatorColor = [UIColor colorWithWhite:1.0 alpha:0.9];
+        _pageIndicatorColor = [UIColor colorWithWhite:0.5 alpha:0.9];
     }
     return self;
 }

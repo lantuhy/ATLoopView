@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @required
 - (NSInteger)numberOfPagesInLoopView:(ATLoopView *)loopView;
+- (__kindof UIView *)contentViewForLoopView:(ATLoopView *)loopView;
 - (void)loopView:(ATLoopView *)loopView shouldUpdateContentView:(__kindof UIView *)contentView forPageAtIndex:(NSInteger)index;
 
 @optional
@@ -21,11 +22,22 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@interface ATLoopViewBlocksDelegate : NSObject< ATLoopViewDelegate >
+
+@property (nonatomic, strong, nullable) NSInteger ( ^ numberOfPages)(void);
+@property (nonatomic, strong, nullable) UIView * (^ contentViewForLoopView)(void);
+@property (nonatomic, strong, nullable) void ( ^ shouldUpdateContentViewForPageAtIndex)(__kindof UIView *contentView, NSInteger idx);
+@property (nonatomic, strong, nullable) void ( ^ didScrollToPageAtIndex)(NSInteger idx);
+@property (nonatomic, strong, nullable) void ( ^ didSelectPageAtIndex)(NSInteger idx);
+
+@end
+
 typedef NS_ENUM(NSInteger, ATLoopViewScrollDirection)
 {
     ATLoopViewScrollDirectionHorizontal,
     ATLoopViewScrollDirectionVertical,
 };
+
 
 @interface ATLoopView : UIView
 
@@ -44,21 +56,26 @@ typedef NS_ENUM(NSInteger, ATLoopViewScrollDirection)
  */
 @property (nonatomic, strong) CAMediaTimingFunction *autoScrollTimingFunction;
 
-/* 和ATLoopViewDelegate对应的blocks
- */
-@property (nonatomic, strong) NSInteger ( ^ numberOfPages)(void);
-@property (nonatomic, strong) void ( ^ shouldUpdateContentViewForPageAtIndex)(__kindof UIView *contentView, NSInteger idx);
-@property (nonatomic, strong, nullable) void ( ^ didScrollToPageAtIndex)(NSInteger idx);
-@property (nonatomic, strong, nullable) void ( ^ didSelectPageAtIndex)(NSInteger idx);
-
 - (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithCoder:(NSCoder *)aDecoder NS_UNAVAILABLE;
 
-- (void)registerClassForContentView:(Class)cls;
-- (void)registerNibForContentView:(UINib *)nib;
+/* 把ATLoopViewBlocksDelegate对象设置为它的delegate,并持有它。
+ */
+- (void)setBlocksDelegate:(nullable ATLoopViewBlocksDelegate *)delegate;
 - (void)reloadData;
 - (void)enableAutoScroll:(BOOL)enable;
 
 @end
 
+
+@interface ATLoopViewImageDelegate : ATLoopViewBlocksDelegate
+
+@property (nonatomic, copy) NSArray<UIImage *> *images;
+@property (nonatomic) UIViewContentMode contentMode;   // content mode for UIImageView.
+
+- (instancetype)initWithImages:(NSArray<UIImage *> *)images contentMode:(UIViewContentMode)contentMode;
+
+@end
+
 NS_ASSUME_NONNULL_END
+

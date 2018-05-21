@@ -13,9 +13,11 @@
 		F707623D20AD4DF300767897 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F707623C20AD4DF300767897 /* Assets.xcassets */; };
 		F707624020AD4DF300767897 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F707623E20AD4DF300767897 /* LaunchScreen.storyboard */; };
 		F707624320AD4DF300767897 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F707624220AD4DF300767897 /* main.m */; };
-		F707625120AD617800767897 /* LoopViewCustomContentView.xib in Resources */ = {isa = PBXBuildFile; fileRef = F707625020AD617800767897 /* LoopViewCustomContentView.xib */; };
+		F707625120AD617800767897 /* MovieContentView.xib in Resources */ = {isa = PBXBuildFile; fileRef = F707625020AD617800767897 /* MovieContentView.xib */; };
 		F78B5C9020B0445F005538F2 /* ATLoopView.m in Sources */ = {isa = PBXBuildFile; fileRef = F78B5C8F20B0445F005538F2 /* ATLoopView.m */; };
 		F78B5C9320B044DD005538F2 /* ATPageControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F78B5C9220B044DD005538F2 /* ATPageControl.m */; };
+		F799CEEC20B0A7EB001583F2 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F799CEEB20B0A7EB001583F2 /* README.md */; };
+		F7D95DE220B138AB00F3BA4A /* NewsContentView.xib in Resources */ = {isa = PBXBuildFile; fileRef = F7D95DE120B138AB00F3BA4A /* NewsContentView.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,11 +31,13 @@
 		F707623F20AD4DF300767897 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F707624120AD4DF300767897 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F707624220AD4DF300767897 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		F707625020AD617800767897 /* LoopViewCustomContentView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LoopViewCustomContentView.xib; sourceTree = "<group>"; };
+		F707625020AD617800767897 /* MovieContentView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MovieContentView.xib; sourceTree = "<group>"; };
 		F78B5C8E20B0445F005538F2 /* ATLoopView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATLoopView.h; sourceTree = "<group>"; };
 		F78B5C8F20B0445F005538F2 /* ATLoopView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATLoopView.m; sourceTree = "<group>"; };
 		F78B5C9120B044DD005538F2 /* ATPageControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATPageControl.h; sourceTree = "<group>"; };
 		F78B5C9220B044DD005538F2 /* ATPageControl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATPageControl.m; sourceTree = "<group>"; };
+		F799CEEB20B0A7EB001583F2 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
+		F7D95DE120B138AB00F3BA4A /* NewsContentView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = NewsContentView.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,7 +80,9 @@
 				F707623E20AD4DF300767897 /* LaunchScreen.storyboard */,
 				F707624120AD4DF300767897 /* Info.plist */,
 				F707624220AD4DF300767897 /* main.m */,
-				F707625020AD617800767897 /* LoopViewCustomContentView.xib */,
+				F707625020AD617800767897 /* MovieContentView.xib */,
+				F7D95DE120B138AB00F3BA4A /* NewsContentView.xib */,
+				F799CEEB20B0A7EB001583F2 /* README.md */,
 			);
 			path = Demo;
 			sourceTree = "<group>";
@@ -151,8 +157,10 @@
 			files = (
 				F707624020AD4DF300767897 /* LaunchScreen.storyboard in Resources */,
 				F707623D20AD4DF300767897 /* Assets.xcassets in Resources */,
+				F7D95DE220B138AB00F3BA4A /* NewsContentView.xib in Resources */,
+				F799CEEC20B0A7EB001583F2 /* README.md in Resources */,
 				F707623B20AD4DED00767897 /* Main.storyboard in Resources */,
-				F707625120AD617800767897 /* LoopViewCustomContentView.xib in Resources */,
+				F707625120AD617800767897 /* MovieContentView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

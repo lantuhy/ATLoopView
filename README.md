@@ -3,16 +3,23 @@
 ## (图片、文字、自定义视图)循环滚动
 
 ## 示例代码
-NSArray<UIImage *> *images =@[image1, image2, image3];
-ATLoopView *imageLoopView = [[ATLoopView alloc] init];
-[imageLoopView registerClassForContentView:[UIImageView class]];
-imageLoopView.numberOfPages = ^NSInteger{
-    return images.count;
-};
-imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){
-    contentView.contentMode = UIViewContentModeScaleAspectFill;
-    contentView.image = images[idx];
-};
+#  ATLoopView
+
+## (图片、文字、自定义视图)循环滚动
+
+### 示例代码
+```Objective-C
+_imageLoopView = [[ATLoopView alloc] init];
+_imageLoopView.autoScrollAnimationDuration = 1.0;
+ATLoopViewImageDelegate *delegate = 
+    [[ATLoopViewImageDelegate alloc] 
+        initWithImages:@[image1, image2, image3] 
+        contentMode:UIViewContentModeScaleAspectFit];
+[_imageLoopView setBlocksDelegate:delegate];
+```
+
+### 演示
+<img src="https://github.com/lantuhy/ATLoopView/blob/master/Screenshot/demo.gif" width="320" height="568" />
 
  ![image](https://github.com/lantuhy/ATLoopView/raw/master/screenshots/vim-screenshot.jpg)
 
