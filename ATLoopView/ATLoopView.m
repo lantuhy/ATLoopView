@@ -553,7 +553,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 
 - (void)loopView:(ATLoopView *)loopView didSelectPageAtIndex:(NSInteger)index
 {
-    if(_didScrollToPageAtIndex)
+    if(_didSelectPageAtIndex)
         _didSelectPageAtIndex(index);
 }
 
