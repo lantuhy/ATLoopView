@@ -11,7 +11,7 @@ imageLoopView.numberOfPages = ^NSInteger{
       return images.count;
 };
 imageLoopView.shouldUpdateContentViewForPageAtIndex = ^(UIImageView *contentView, NSInteger idx){
-      contentView.contentMode = UIViewContentModeScaleAspectFill;<br>
+      contentView.contentMode = UIViewContentModeScaleAspectFill;
       contentView.image = images[idx];
 };
 ```
