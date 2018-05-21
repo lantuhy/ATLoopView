@@ -14,7 +14,7 @@ ATLoopViewImageDelegate *delegate =
 ```
 
 ### 演示
-<img src="https://github.com/lantuhy/ATLoopView/blob/master/Screenshot/demo.gif" width="320" height="568" />
+<img src="https://github.com/lantuhy/ATLoopView/blob/master/Screenshots/demo.gif" width="320" height="568" />
 
 
 
