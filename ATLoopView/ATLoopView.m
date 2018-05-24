@@ -289,10 +289,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 {
     [_autoScrollTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:_autoScrollTimeInterval]];
     if(_protocolResponds.didSelectPage)
-    {
-        NSInteger currentPage = _pageControl.currentPage;
-        [_delegate loopView:self didSelectPageAtIndex:currentPage];
-    }
+        [_delegate loopView:self didSelectPageAtIndex:_currentPage];
 }
 
 #pragma mark - _ATLoopScrollViewDelegate
@@ -317,7 +314,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 {
     if(_numberOfPages > 0)
     {
-        NSInteger currentPage = _pageControl.currentPage;
+        NSInteger currentPage = _currentPage;
         NSInteger page = index == 0 ? currentPage - 1 : index == 1 ? currentPage : currentPage + 1;
         if(page < 0)
             page = _numberOfPages - 1;
