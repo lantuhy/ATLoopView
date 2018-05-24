@@ -6,6 +6,7 @@
 ```Objective-C
 _imageLoopView = [[ATLoopView alloc] init];
 _imageLoopView.autoScrollAnimationDuration = 1.0;
+_imageLoopView.pageControl = [ATPageControl new];
 ATLoopViewImageDelegate *delegate = 
     [[ATLoopViewImageDelegate alloc] 
         initWithImages:@[image1, image2, image3] 
