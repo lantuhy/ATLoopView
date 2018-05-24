@@ -24,12 +24,22 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
 - (instancetype)initWithFrame:(CGRect)frame
 {
     if(self = [super initWithFrame:frame])
-    {
-        _dotLayers = [[NSMutableArray alloc] initWithCapacity:8];
-        _currentPageIndicatorColor = [UIColor colorWithWhite:1.0 alpha:0.9];
-        _pageIndicatorColor = [UIColor colorWithWhite:0.5 alpha:0.9];
-    }
+        [self initialize];
     return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    if(self = [super initWithCoder:aDecoder])
+        [self initialize];
+    return self;
+}
+
+- (void)initialize
+{
+    _dotLayers = [[NSMutableArray alloc] initWithCapacity:8];
+    _currentPageIndicatorColor = [UIColor colorWithWhite:1.0 alpha:0.9];
+    _pageIndicatorColor = [UIColor colorWithWhite:0.5 alpha:0.9];
 }
 
 - (CGSize)sizeThatFits:(CGSize)size
@@ -111,7 +121,7 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
     }
 }
 
-- (void)setcurrentPageIndicatorColor:(UIColor *)color
+- (void)setCurrentPageIndicatorColor:(UIColor *)color
 {
     _currentPageIndicatorColor = color;
     NSInteger idx = 0;
@@ -122,7 +132,7 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
     }
 }
 
-- (void)updateTransitionProgress:(float)progress
+- (void)updatePageTransitionPercent:(float)percent
 {
     if(_pageTransitionLayer == nil)
     {
@@ -139,9 +149,9 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
                                         DotsLayoutMargins.left + (DotRadius * 2 + DotSpacing) * _currentPage,
                                         CGRectGetMaxY(bounds) - DotsLayoutMargins.bottom - DotRadius);
     CGRect layerBounds = CGRectMake(0 ,0,
-                                    DotRadius * 2 + fabsf(progress) * (DotRadius * 2 + DotSpacing),
+                                    DotRadius * 2 + fabsf(percent) * (DotRadius * 2 + DotSpacing),
                                     DotRadius * 2);
-    if(progress < 0)
+    if(percent < 0)
         layerPosition.x -= (layerBounds.size.width - DotRadius * 2);
     
     CGMutablePathRef path = CGPathCreateMutable();
@@ -150,7 +160,7 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
     CGPathAddArc(path, NULL, CGRectGetMaxX(layerBounds) - DotRadius, DotRadius, DotRadius, 0, M_PI * 2, NO);
     CGPathMoveToPoint(path, NULL, DotRadius, 0);
     CGPoint ep = CGPointMake(CGRectGetMaxX(layerBounds) - DotRadius, 0);
-    CGPoint cp = CGPointMake(CGRectGetMidX(layerBounds), DotRadius * fabsf(progress) * fabsf(progress));
+    CGPoint cp = CGPointMake(CGRectGetMidX(layerBounds), DotRadius * fabsf(percent) * fabsf(percent));
     CGPathAddQuadCurveToPoint(path, NULL, cp.x, cp.y, ep.x, ep.y);
     CGPathAddLineToPoint(path, NULL, ep.x, DotRadius * 2);
     CGPathAddQuadCurveToPoint(path, NULL, cp.x, DotRadius * 2 - cp.y, DotRadius, DotRadius * 2);
@@ -160,7 +170,7 @@ static const UIEdgeInsets DotsLayoutMargins = {12, 16, 12, 16};
     CGPathRelease(path);
     _pageTransitionLayer.position = layerPosition;
     _pageTransitionLayer.bounds = layerBounds;
-    _pageTransitionLayer.hidden = fabsf(progress) == 0.0 || fabs(progress) == 1.0 ? YES : NO;
+    _pageTransitionLayer.hidden = fabsf(percent) == 0.0 || fabs(percent) == 1.0 ? YES : NO;
 }
 
 - (void)layoutSubviews

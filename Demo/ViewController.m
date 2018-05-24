@@ -57,12 +57,13 @@
     {
         _imageLoopView = [[ATLoopView alloc] init];
         _imageLoopView.autoScrollAnimationDuration = 1.0;
+        _imageLoopView.pageControl = [ATPageControl new];
         NSArray<UIImage *> *images = @[
-           [UIImage imageNamed:@"image4"],
-           [UIImage imageNamed:@"image5"],
-           [UIImage imageNamed:@"image6"],];
+                                       [UIImage imageNamed:@"image4"],
+                                       [UIImage imageNamed:@"image5"],
+                                       [UIImage imageNamed:@"image6"],];
         ATLoopViewImageDelegate *delegate = [[ATLoopViewImageDelegate alloc] initWithImages:images contentMode:UIViewContentModeScaleAspectFit];
-        [_imageLoopView setBlocksDelegate:delegate];
+        [self.imageLoopView setBlocksDelegate:delegate];
     }
     return _imageLoopView;
 }
@@ -75,7 +76,6 @@
         _newsLoopView = [[ATLoopView alloc] init];
         _newsLoopView.backgroundColor = [UIColor colorWithRed:0.97 green:0.99 blue:1.0 alpha:1.0];
         _newsLoopView.scrollDirection = ATLoopViewScrollDirectionVertical;
-        _newsLoopView.pageIndicatorHidden = YES;
         _newsLoopView.autoScrollAnimationDuration = 1.0;
         _newsLoopView.autoScrollTimeInterval = 6.0;
         
@@ -109,7 +109,9 @@
     if(_movieLoopView == nil)
     {
         _movieLoopView = [[ATLoopView alloc] init];
-        _movieLoopView.currentPageIndicatorColor = [UIColor colorWithRed:0 green:0.75 blue:1.0 alpha:0.9];
+        ATPageControl *pageControl = [ATPageControl new];
+        pageControl.currentPageIndicatorColor = [UIColor colorWithRed:0 green:0.75 blue:1.0 alpha:0.9];
+        _movieLoopView.pageControl = pageControl;
         _movieLoopView.autoScrollTimingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
         _movieLoopView.autoScrollAnimationDuration = 1.0;
         _movieLoopView.autoScrollTimeInterval = 7.0;

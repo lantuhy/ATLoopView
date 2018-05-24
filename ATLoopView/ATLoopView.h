@@ -4,6 +4,7 @@
 
 
 #import <UIKit/UIKit.h>
+#import "ATPageControl.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,9 +25,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ATLoopViewBlocksDelegate : NSObject< ATLoopViewDelegate >
 
-@property (nonatomic, strong, nullable) NSInteger ( ^ numberOfPages)(void);
-@property (nonatomic, strong, nullable) UIView * (^ contentViewForLoopView)(void);
-@property (nonatomic, strong, nullable) void ( ^ shouldUpdateContentViewForPageAtIndex)(__kindof UIView *contentView, NSInteger idx);
+@property (nonatomic, strong) NSInteger ( ^ numberOfPages)(void);
+@property (nonatomic, strong) UIView * (^ contentViewForLoopView)(void);
+@property (nonatomic, strong) void ( ^ shouldUpdateContentViewForPageAtIndex)(__kindof UIView *contentView, NSInteger idx);
 @property (nonatomic, strong, nullable) void ( ^ didScrollToPageAtIndex)(NSInteger idx);
 @property (nonatomic, strong, nullable) void ( ^ didSelectPageAtIndex)(NSInteger idx);
 
@@ -44,9 +45,7 @@ typedef NS_ENUM(NSInteger, ATLoopViewScrollDirection)
 @property (nonatomic) ATLoopViewScrollDirection scrollDirection;
 @property (nonatomic, weak, nullable) id<ATLoopViewDelegate> delegate;
 
-@property(nullable, nonatomic,strong) UIColor *pageIndicatorColor;
-@property(nullable, nonatomic,strong) UIColor *currentPageIndicatorColor;
-@property(nonatomic) BOOL pageIndicatorHidden;
+@property (nonatomic, strong, nullable) UIView<ATPageControl> *pageControl;
 
 @property (nonatomic) NSTimeInterval autoScrollAnimationDuration;  // default is 0.25
 @property (nonatomic) NSTimeInterval autoScrollTimeInterval;       // default is 5.0
@@ -57,7 +56,7 @@ typedef NS_ENUM(NSInteger, ATLoopViewScrollDirection)
 @property (nonatomic, strong) CAMediaTimingFunction *autoScrollTimingFunction;
 
 - (instancetype)initWithFrame:(CGRect)frame NS_DESIGNATED_INITIALIZER;
-- (instancetype)initWithCoder:(NSCoder *)aDecoder NS_UNAVAILABLE;
+- (instancetype)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
 
 /* 把ATLoopViewBlocksDelegate对象设置为它的delegate,并持有它。
  */

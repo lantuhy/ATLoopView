@@ -20,8 +20,9 @@ static void AnimationPacingBuilderRelease(AnimationPacingBuilder *apb);
 @protocol _ATLoopScrollViewDelegate < UIScrollViewDelegate >
 
 - (__kindof UIView *)contentViewForScrollView:(_ATLoopScrollView *)scorllView;
-- (void)scrollView:(_ATLoopScrollView *)scrollView shouldUpdateContentViewAtIndex:(NSInteger)index;
-- (void)scrollView:(_ATLoopScrollView *)scrollView contentOffsetChangedWithNewValue:(CGPoint)contentOffsetNew oldValue:(CGPoint)contentOffsetOld;
+- (void)scrollView:(_ATLoopScrollView *)scrollView shouldUpdateContentView:(UIView *)contentView atIndex:(NSInteger)index;
+- (void)scrollView:(_ATLoopScrollView *)scrollView pageChanged:(NSInteger)newPage oldValue:(NSInteger)oldPage;
+- (void)scrollView:(_ATLoopScrollView *)scrollView contentOffsetChanged:(CGPoint)newContentOffset oldValue:(CGPoint)oldContentOffset;
 
 @end
 
@@ -29,13 +30,16 @@ static void AnimationPacingBuilderRelease(AnimationPacingBuilder *apb);
 @interface _ATLoopScrollView : UIScrollView
 
 @property (nonatomic) ATLoopViewScrollDirection scrollDirection;
-@property (nonatomic) NSArray<UIView *> *contentViews;
 
-- (void)updateContentViews;
+- (void)reloadContentViews;
 
 @end
 
 @interface ATLoopView () <_ATLoopScrollViewDelegate>
+
+@property (nonatomic) NSInteger numberOfPages;
+@property (nonatomic) NSInteger currentPage;
+@property (nonatomic) BOOL needsReloadData;
 
 @end
 
@@ -51,7 +55,6 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 @implementation ATLoopView
 {
     _ATLoopScrollView *_scrollView;
-    ATPageControl *_pageControl;
     
     NSTimer *_autoScrollTimer;
     AnimationPacingBuilder *_animationPaingBulider;
@@ -59,36 +62,53 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     CADisplayLink *_displayLink;
     NSTimeInterval _animationStartTimestamp;
     
-    struct DelegateResponds
+    struct ProtocolResponds
     {
         bool didSelectPage : 1;
         bool didScrollToPage : 1;
-    }_delegateResponds;
+        bool updatePageTransitionPercent : 1;
+    }_protocolResponds;
     ATLoopViewBlocksDelegate *_blocksDelegate;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
     if(self = [super initWithFrame:frame])
-    {
-        _scrollView = [[_ATLoopScrollView alloc] init];
-        _scrollView.pagingEnabled = YES;
-        _scrollView.delegate = self;
-        _scrollView.scrollDirection = ATLoopViewScrollDirectionHorizontal;
-        [self addSubview:_scrollView];
-        
-        _pageControl = [[ATPageControl alloc] init];
-        [self addSubview:_pageControl];
-        
-        _autoScrollTimeInterval = 5.0;
-        _autoScrollAnimationDuration = 0.25;
-    }
+        [self initialize];
     return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    if(self = [super initWithCoder:aDecoder])
+        [self initialize];
+    return self;
+}
+
+- (void)initialize
+{
+    _needsReloadData = YES;
+    
+    _scrollView = [[_ATLoopScrollView alloc] init];
+    _scrollView.pagingEnabled = YES;
+    _scrollView.delegate = self;
+    _scrollView.scrollDirection = ATLoopViewScrollDirectionHorizontal;
+    [self addSubview:_scrollView];
+    
+    _autoScrollTimeInterval = 5.0;
+    _autoScrollAnimationDuration = 0.25;
 }
 
 - (void)dealloc
 {
     AnimationPacingBuilderRelease(_animationPaingBulider);
+}
+
+- (void)setPageControl:(UIView<ATPageControl> *)pageControl
+{
+    _pageControl = pageControl;
+    [self addSubview:_pageControl];
+    _protocolResponds.updatePageTransitionPercent = [_pageControl respondsToSelector:@selector(updatePageTransitionPercent:)];
 }
 
 @synthesize delegate = _delegate;
@@ -97,8 +117,8 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     _delegate = delegate;
     if(_delegate)
     {
-        _delegateResponds.didSelectPage = [_delegate respondsToSelector:@selector(loopView:didSelectPageAtIndex:)];
-        _delegateResponds.didScrollToPage = [_delegate respondsToSelector:@selector(loopView:didScrollToPageAtIndex:)];
+        _protocolResponds.didSelectPage = [_delegate respondsToSelector:@selector(loopView:didSelectPageAtIndex:)];
+        _protocolResponds.didScrollToPage = [_delegate respondsToSelector:@selector(loopView:didScrollToPageAtIndex:)];
     }
 }
 
@@ -131,25 +151,6 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     return _autoScrollTimingFunction;
 }
 
-- (void)setPageIndicatorHidden:(BOOL)hidden
-{
-    _pageIndicatorHidden = hidden;
-    _pageControl.hidden = hidden;
-}
-
-@dynamic pageIndicatorColor;
-@dynamic currentPageIndicatorColor;
-
-- (id)forwardingTargetForSelector:(SEL)aSelector
-{
-    if(aSelector == @selector(setPageIndicatorColor:) ||
-       aSelector == @selector(setCurrentPageIndicatorColor:) ||
-       aSelector == @selector(pageIndicatorColor) ||
-       aSelector == @selector(currentPageIndicatorColor))
-        return _pageControl;
-    return [super forwardingTargetForSelector:aSelector];
-}
-
 - (void)enableAutoScroll:(BOOL)enable
 {
     if(enable)
@@ -174,18 +175,48 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     }
 }
 
+- (void)setNumberOfPages:(NSInteger)numberOfPages
+{
+    _numberOfPages = numberOfPages;
+    if(_pageControl)
+    {
+        if(_numberOfPages != _pageControl.numberOfPages)
+        {
+            _pageControl.numberOfPages = numberOfPages;
+            [self setNeedsLayout];
+        }
+        _pageControl.numberOfPages = numberOfPages;
+        _pageControl.hidden = numberOfPages <= 1;
+        if(_protocolResponds.updatePageTransitionPercent)
+            [_pageControl updatePageTransitionPercent:0.0];
+    }
+    self.currentPage = 0;
+}
+
+- (void)setCurrentPage:(NSInteger)currentPage
+{
+    _currentPage = currentPage;
+    _pageControl.currentPage = currentPage;
+    if(_protocolResponds.didScrollToPage)
+        [_delegate loopView:self didScrollToPageAtIndex:_currentPage];
+}
+
 - (void)reloadData
 {
-    NSInteger numberOfPages = [_delegate numberOfPagesInLoopView:self];
-    if(numberOfPages != _pageControl.numberOfPages)
+    _needsReloadData = YES;
+    [self reloadDataIfNeeds];
+}
+
+- (void)reloadDataIfNeeds
+{
+    if(_needsReloadData && _delegate && _displayLink == nil && !CGSizeEqualToSize(self.bounds.size, CGSizeZero))
     {
-        _pageControl.numberOfPages = numberOfPages;
-        [self setNeedsLayout];
+        [_autoScrollTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:_autoScrollTimeInterval]];
+        self.numberOfPages = [_delegate numberOfPagesInLoopView:self];
+        _scrollView.scrollEnabled = _numberOfPages > 1;
+        [_scrollView reloadContentViews];
+        _needsReloadData = NO;
     }
-    _pageControl.currentPage = 0;
-    _pageControl.hidden = _pageIndicatorHidden || numberOfPages <= 1;
-    _scrollView.scrollEnabled = numberOfPages > 1;
-    [_scrollView updateContentViews];
 }
 
 - (void)removeFromSuperview
@@ -204,15 +235,15 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     _scrollView.frame = CGRectMake(0, 0, bounds.size.width, bounds.size.height);
     CGSize size = [_pageControl sizeThatFits:bounds.size];
     _pageControl.frame = CGRectMake(bounds.size.width - size.width, CGRectGetMaxY(bounds) - size.height, size.width, size.height);
-    if(!CGSizeEqualToSize(bounds.size, CGSizeZero) && _pageControl.numberOfPages == 0)
-        [self reloadData];
+    
+    [self reloadDataIfNeeds];
 }
 
 - (void)handleTimer:(NSTimer *)sender
 {
     if(sender == _autoScrollTimer)
     {
-        if(_pageControl.numberOfPages < 1 || _scrollView.isDragging || _scrollView.isDecelerating || _scrollView.isTracking)
+        if(_numberOfPages < 1 || _scrollView.isDragging || _scrollView.isDecelerating || _scrollView.isTracking)
             return;
         if(_displayLink == nil)
         {
@@ -238,6 +269,8 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
         [_displayLink invalidate];
         _displayLink = nil;
         _scrollView.userInteractionEnabled = YES;
+        if(_needsReloadData)
+            [self reloadDataIfNeeds];
     }
 }
 
@@ -255,7 +288,7 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [_autoScrollTimer setFireDate:[NSDate dateWithTimeIntervalSinceNow:_autoScrollTimeInterval]];
-    if(_delegateResponds.didSelectPage)
+    if(_protocolResponds.didSelectPage)
     {
         NSInteger currentPage = _pageControl.currentPage;
         [_delegate loopView:self didSelectPageAtIndex:currentPage];
@@ -280,56 +313,48 @@ static inline CGFloat DirectionWidth(CGSize size, ATLoopViewScrollDirection dire
     return [_delegate contentViewForLoopView:self];
 }
 
-- (void)scrollView:(_ATLoopScrollView *)scrollView shouldUpdateContentViewAtIndex:(NSInteger)index
+- (void)scrollView:(_ATLoopScrollView *)scrollView shouldUpdateContentView:(UIView *)contentView atIndex:(NSInteger)index
 {
-    NSInteger numberOfPages = _pageControl.numberOfPages;
-    if(numberOfPages > 0)
+    if(_numberOfPages > 0)
     {
         NSInteger currentPage = _pageControl.currentPage;
         NSInteger page = index == 0 ? currentPage - 1 : index == 1 ? currentPage : currentPage + 1;
         if(page < 0)
-            page = numberOfPages - 1;
-        else if(page >= numberOfPages)
+            page = _numberOfPages - 1;
+        else if(page >= _numberOfPages)
             page = 0;
-        [_delegate loopView:self shouldUpdateContentView:_scrollView.contentViews[index] forPageAtIndex:page];
+        [_delegate loopView:self shouldUpdateContentView:contentView forPageAtIndex:page];
     }
 }
 
-- (void)scrollView:(_ATLoopScrollView *)scrollView contentOffsetChangedWithNewValue:(CGPoint)contentOffsetNew oldValue:(CGPoint)contentOffsetOld;
+- (void)scrollView:(_ATLoopScrollView *)scrollView pageChanged:(NSInteger)newPage oldValue:(NSInteger)oldPage
 {
-    CGRect bounds = _scrollView.bounds;
-    NSInteger numberOfPages = _pageControl.numberOfPages;
-    if(numberOfPages > 0)
+    NSInteger currentPage = _currentPage;
+    if(newPage < oldPage)
     {
-        ATLoopViewScrollDirection scrollDirection = _scrollView.scrollDirection;
-        CGFloat width = DirectionWidth(bounds.size, scrollDirection);
-        CGFloat offsetOld = DirectionOffset(contentOffsetOld, scrollDirection);
-        CGFloat offsetNew = DirectionOffset(contentOffsetNew, scrollDirection);
-        
-        NSInteger currentPage = _pageControl.currentPage;
-        BOOL currentPageChanged = NO;
-        if(offsetOld <= width * 1.5 &&  offsetNew > width * 1.5)
+        if(--currentPage < 0)
+            currentPage = _numberOfPages - 1;
+    }
+    else{
+        if(++currentPage == _numberOfPages)
+            currentPage = 0;
+    }
+    self.currentPage = currentPage;
+}
+
+- (void)scrollView:(_ATLoopScrollView *)scrollView contentOffsetChanged:(CGPoint)newContentOffset oldValue:(CGPoint)oldContentOffset
+{
+    if(_numberOfPages > 0)
+    {
+        if(!_pageControl.hidden && _protocolResponds.updatePageTransitionPercent)
         {
-            if(++currentPage >= numberOfPages)
-                currentPage = 0;
-            _pageControl.currentPage = currentPage;
-            currentPageChanged = YES;
-        }
-        if(offsetOld >= width * 0.5 && offsetNew < width * 0.5 )
-        {
-            if(--currentPage < 0)
-                currentPage = numberOfPages - 1;
-            _pageControl.currentPage = currentPage;
-            currentPageChanged = YES;
-        }
-        if(currentPageChanged && _delegateResponds.didScrollToPage)
-            [_delegate loopView:self didScrollToPageAtIndex:currentPage];
-        
-        if(!_pageControl.hidden)
-        {
-            float transitionProgress = (offsetNew - width) * 2 / width;
-            if(fabsf(transitionProgress) <= 1.0 && fabsf(transitionProgress) >= 0.0)
-                [_pageControl updateTransitionProgress:transitionProgress];
+            ATLoopViewScrollDirection scrollDirection = _scrollView.scrollDirection;
+            CGRect bounds = _scrollView.bounds;
+            CGFloat width = DirectionWidth(bounds.size, scrollDirection);
+            CGFloat newOffset = DirectionOffset(newContentOffset, scrollDirection);
+            double transitionPercent = (newOffset - width) * 2 / width;
+            if(fabs(transitionPercent) <= 1.0 && fabs(transitionPercent) >= 0.0)
+                [_pageControl updatePageTransitionPercent:transitionPercent];
         }
     }
 }
@@ -349,7 +374,6 @@ static const NSInteger kNumberOfContentViews = 3;
 {
     NSMutableArray<UIView *> *_contentViews;
     BOOL _contentViewsNeedsUpdate[kNumberOfContentViews];
-    BOOL _layoutingContentViews;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -371,85 +395,100 @@ static const NSInteger kNumberOfContentViews = 3;
     if(!CGSizeEqualToSize(previousFrame.size, frame.size))
     {
         self.contentSize = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
-        CGSizeMake(frame.size.width * kNumberOfContentViews, frame.size.height) :
-        CGSizeMake(frame.size.width, frame.size.height * kNumberOfContentViews);
+            CGSizeMake(frame.size.width * kNumberOfContentViews, frame.size.height) :
+            CGSizeMake(frame.size.width, frame.size.height * kNumberOfContentViews);
         [self layoutContentViews];
+        if(previousFrame.size.width != 0 && previousFrame.size.height != 0)
+        {
+            CGPoint contentOffset = self.contentOffset;
+            self.contentOffset = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
+                CGPointMake(contentOffset.x * frame.size.width / previousFrame.size.width, 0) :
+                CGPointMake(0, contentOffset.y * frame.size.height / previousFrame.size.height);
+        }
+    }
+}
+
+- (void)reloadContentViews
+{
+    for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
+        _contentViewsNeedsUpdate[i] = YES;
+    if(_contentViews == nil)
+    {
+        _contentViews = [[NSMutableArray alloc] initWithCapacity:kNumberOfContentViews];
+        for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
+        {
+            UIView *contentView = [self.delegate contentViewForScrollView:self];
+            [self addSubview:contentView];
+            _contentViews[i] = contentView;
+        }
+        [self layoutContentViews];
+        [self adjustContentOffsetToMiddle];
+    }
+    [self updateContentViewsIfNeeded];
+}
+
+- (void)updateContentViewsIfNeeded
+{
+    NSInteger idx = 0;
+    for(UIView *contentView in _contentViews)
+    {
+        if(_contentViewsNeedsUpdate[idx])
+        {
+            [self.delegate scrollView:self shouldUpdateContentView:contentView atIndex:idx];
+            _contentViewsNeedsUpdate[idx] = NO;
+        }
+        ++idx;
     }
 }
 
 - (void)layoutContentViews
 {
-    _layoutingContentViews = YES;
     CGRect bounds = self.bounds;
-    if(DirectionWidth(bounds.size, _scrollDirection) > 0)
+    NSInteger idx = 0;
+    for(UIView *contentView in _contentViews)
     {
-        if(_contentViews == nil)
-        {
-            _contentViews = [[NSMutableArray alloc] initWithCapacity:kNumberOfContentViews];
-            for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
-            {
-                UIView *contentView = [self.delegate contentViewForScrollView:self];
-                [self addSubview:contentView];
-                _contentViews[i] = contentView;
-            }
-        }
-        
-        NSInteger i = 0;
-        for(UIView *contentView in _contentViews)
-        {
-            contentView.frame = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
-            CGRectMake(bounds.size.width * i, 0, bounds.size.width, bounds.size.height) :
-            CGRectMake(0, bounds.size.height * i, bounds.size.width, bounds.size.height);
-            ++i;
-        }
-        
-        self.contentOffset = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
-        CGPointMake(bounds.size.width, 0) : CGPointMake(0, bounds.size.height);
+        contentView.frame = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
+            CGRectMake(bounds.size.width * idx, 0, bounds.size.width, bounds.size.height) :
+            CGRectMake(0, bounds.size.height * idx, bounds.size.width, bounds.size.height);
+        ++idx;
     }
-    _layoutingContentViews = NO;
 }
 
-- (void)updateContentViews
+- (void)adjustContentOffsetToMiddle
 {
-    for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
-        _contentViewsNeedsUpdate[i] = YES;
-    if(DirectionOffset(self.contentOffset, _scrollDirection) == DirectionWidth(self.bounds.size, _scrollDirection))
-        [self updateContentViewsIfNeeded];
-}
-
-- (void)updateContentViewsIfNeeded
-{
-    for(NSInteger i = 0; i < kNumberOfContentViews; ++i)
-    {
-        if(_contentViewsNeedsUpdate[i])
-        {
-            [self.delegate scrollView:self shouldUpdateContentViewAtIndex:i];
-            _contentViewsNeedsUpdate[i] = NO;
-        }
-    }
+    CGRect bounds = self.bounds;
+    CGPoint contentOffset = _scrollDirection == ATLoopViewScrollDirectionHorizontal ?
+        CGPointMake(bounds.size.width, 0) :
+        CGPointMake(0, bounds.size.height);
+    super.contentOffset = contentOffset;
 }
 
 - (void)setContentOffset:(CGPoint)contentOffset
 {
-    CGPoint contentOffsetOld = self.contentOffset;
+    CGPoint oldContentOffset = self.contentOffset;
     [super setContentOffset:contentOffset];
     
-    [self.delegate scrollView:self contentOffsetChangedWithNewValue:contentOffset oldValue:contentOffsetOld];
-    if(_contentViews && !_layoutingContentViews)
+    [self.delegate scrollView:self contentOffsetChanged:contentOffset oldValue:oldContentOffset];
+    if(_contentViews)
     {
-        CGFloat offsetOld = DirectionOffset(contentOffsetOld, _scrollDirection);
-        CGFloat offsetNew = DirectionOffset(contentOffset, _scrollDirection);
+        CGFloat oldOffset = DirectionOffset(oldContentOffset, _scrollDirection);
+        CGFloat newOffset = DirectionOffset(contentOffset, _scrollDirection);
         CGFloat width = DirectionWidth(self.bounds.size, _scrollDirection);
-        if( (offsetOld > 0 && offsetNew <= 0) || (offsetOld < 2 * width && offsetNew >= 2 * width) )
+        
+        NSInteger oldPage = floor((oldOffset + width / 2) / width);
+        NSInteger newPage = floor((newOffset + width / 2) / width);
+        if(newPage != oldPage)
+            [self.delegate scrollView:self pageChanged:newPage oldValue:oldPage];
+        
+        if( (oldOffset > 0 && newOffset <= 0) || (oldOffset < 2 * width && newOffset >= 2 * width) )
         {
-            if(offsetNew == 0)
+            if(newOffset == 0)
             {
                 UIView *contentView2 = _contentViews[2];
                 _contentViews[2] = _contentViews[1];
                 _contentViews[1] = _contentViews[0];
                 _contentViews[0] = contentView2;
                 _contentViewsNeedsUpdate[0] = YES;
-                [self layoutContentViews];
             }
             else {
                 UIView *contentView0 = _contentViews[0];
@@ -457,8 +496,9 @@ static const NSInteger kNumberOfContentViews = 3;
                 _contentViews[1] = _contentViews[2];
                 _contentViews[2] = contentView0;
                 _contentViewsNeedsUpdate[2] = YES;
-                [self layoutContentViews];
             }
+            [self layoutContentViews];
+            [self adjustContentOffsetToMiddle];
             [self updateContentViewsIfNeeded];
         }
     }
@@ -605,8 +645,8 @@ float AnimationPacingBuilderGetPacing(AnimationPacingBuilder *abp, NSTimeInterva
     NSInteger idx = roundf(time * kSampleCountPerSecond);
     if(idx > abp->sampleCount)
         idx = abp->sampleCount;
-    float progress = abp->sampleValues[idx - 1];
-    return progress;
+    float pacing = abp->sampleValues[idx - 1];
+    return pacing;
 }
 
 void AnimationPacingBuilderRelease(AnimationPacingBuilder *apb)
